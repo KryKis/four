@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
+#include <unistd.h>
 #include <iostream>
 #define MAX_ARROWS 100
 class Arrow
@@ -17,9 +18,11 @@ class Arrow
     ~Arrow(){};
     float Len();
     void Draw();
-    float GetEndX();
-    float GetEndY();
+    float GetEndX(){return x1;}
+    float GetEndY(){return y1;}
     void Rotate(double);
+    void MoveStart(double x, double y);
+    void MoveEnd(){x1+=0.001;y1+=000.1;}
     void Set(float a, float b, float c, float d, sf::RenderWindow* win){
     this->x0 = a;
     this->y0 = b;
@@ -45,12 +48,13 @@ class ArrowList
         };
         ArrowList(sf::RenderWindow*);
         void DrawAll(){
+            this->arrows[0].MoveEnd();
             this->arrows[0].Draw();
             for(int i=1; i<this->count;i++) {
+                arrows[i].MoveStart(arrows[i-1].GetEndX(), arrows[i-1].GetEndY());
+                arrows[i].MoveEnd();
                 arrows[i].Draw();
-                arrows[i].x1+=0.01;
             }
-            std::cout << "last" << std::endl;
         };
 };
 
@@ -69,10 +73,18 @@ Arrow::Arrow(double a, double b, double c, double d, sf::RenderWindow* win) {
     window = win;
     return;
 }
+void Arrow::MoveStart(double x, double y){
+    double dx = x1-x0;
+    double dy = y1-y0;
+    x0 = x;
+    y0 = y;
+    x1 = x0+dx;
+    y1 = y0+dy;
+}
 void Arrow::Rotate(double rad){
     float x = x1-x0;
     float y = y1-y0;
-    std::cout << atan(y/x) << std::endl;
+    std::cout << atan(-y/x) << std::endl;
 }
 float Arrow::Len() {
     return pow(this->x0-this->x1, 2.) + pow(this->y0-this->y1, 2.);
@@ -106,10 +118,11 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
 
-    window.clear(sf::Color::Black);
-    arlist.DrawAll();
-    window.draw(centreDot);
-    window.display();
+        window.clear(sf::Color::Black);
+        arlist.DrawAll();
+        window.draw(centreDot);
+        window.display();
+        usleep(50000);
     }
 
     return 0;
