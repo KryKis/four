@@ -10,6 +10,7 @@ class Arrow
         float y0;
         float x1;
         float y1;
+        float angle;
         sf::RenderWindow *window;
         sf::Vertex line[2];
     public:
@@ -22,8 +23,9 @@ class Arrow
     float GetEndY(){return y1;}
     void Rotate(double);
     void MoveStart(double x, double y);
+    void MoveStartAndRotate(double x, double y, double th);
     void MoveEnd(){x1+=0.001;y1+=000.1;}
-    void Set(float a, float b, float c, float d, sf::RenderWindow* win){
+    void Set(float a, float b, float c, float d, float e, sf::RenderWindow* win){
     this->x0 = a;
     this->y0 = b;
     this->x1 = c;
@@ -41,18 +43,19 @@ class ArrowList
         Arrow arrows[MAX_ARROWS];
     public:
         void Add(float a, float b){
-            this->arrows[count].Set(this->x,this->y,this->x+a,this->y+b, this->window);
+            this->arrows[count].Set(this->x,this->y,this->x+a,this->y+b,0, this->window);
             this->x += a;
             this->y += b;
             this->count++;
         };
         ArrowList(sf::RenderWindow*);
         void DrawAll(){
-            this->arrows[0].MoveEnd();
+            arrows[0].Rotate(0.005);
             this->arrows[0].Draw();
             for(int i=1; i<this->count;i++) {
-                arrows[i].MoveStart(arrows[i-1].GetEndX(), arrows[i-1].GetEndY());
-                arrows[i].MoveEnd();
+                //arrows[i].MoveStart(arrows[i-1].GetEndX(), arrows[i-1].GetEndY());
+                arrows[i].MoveStartAndRotate(arrows[i-1].GetEndX(), arrows[i-1].GetEndY(), 0.01*float(i));
+                //arrows[i].MoveEnd();
                 arrows[i].Draw();
             }
         };
@@ -81,13 +84,24 @@ void Arrow::MoveStart(double x, double y){
     x1 = x0+dx;
     y1 = y0+dy;
 }
+void Arrow::MoveStartAndRotate(double x, double y, double rad){
+    double dx = x1-x0;
+    double dy = y1-y0;
+    double l = Len();
+    x0 = x;
+    y0 = y;
+    angle+=rad;
+    x1 = x0+cos(angle)*l;
+    y1 = y0+sin(angle)*l;
+}
 void Arrow::Rotate(double rad){
-    float x = x1-x0;
-    float y = y1-y0;
-    std::cout << atan(-y/x) << std::endl;
+    double l = Len();
+    angle+=rad;
+    x1 = x0+cos(angle)*l;
+    y1 = y0+sin(angle)*l;
 }
 float Arrow::Len() {
-    return pow(this->x0-this->x1, 2.) + pow(this->y0-this->y1, 2.);
+    return sqrt(pow(this->x0-this->x1, 2.) + pow(this->y0-this->y1, 2.));
 }
 
 void Arrow::Draw(){
@@ -102,15 +116,15 @@ void Arrow::Draw(){
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(400, 400), "SFML works!");
+    sf::RenderWindow window(sf::VideoMode(600, 600), "SFML works!");
     sf::CircleShape centreDot(4.f);
     centreDot.setFillColor(sf::Color::Red);
     centreDot.setPosition(198., 198.);
     ArrowList arlist(&window);
-    arlist.Add(100., 100.);
-    arlist.Add(-100., 0.);
-    arlist.Add(-100., -50.);
-    arlist.Add(0., -50.);
+    arlist.Add(100., 0.);
+    arlist.Add(80., 0.);
+    arlist.Add(40., 0.);
+    arlist.Add(20., 0.);
     while (window.isOpen())
     {
         sf::Event event;
