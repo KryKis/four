@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <iostream>
 #define MAX_ARROWS 100
+#define MIDDLE 300
+
 class Arrow
 {
     private:
@@ -11,6 +13,7 @@ class Arrow
         float x1;
         float y1;
         float angle;
+        sf::CircleShape endDot;
         sf::RenderWindow *window;
         sf::Vertex line[2];
     public:
@@ -19,6 +22,7 @@ class Arrow
     ~Arrow(){};
     float Len();
     void Draw();
+    void SetDotColor();
     float GetEndX(){return x1;}
     float GetEndY(){return y1;}
     void Rotate(double);
@@ -39,6 +43,8 @@ class ArrowList
         int count;
         float x;
         float y;
+        float endx;
+        float endy;
         sf::RenderWindow *window;
         Arrow arrows[MAX_ARROWS];
     public:
@@ -49,23 +55,33 @@ class ArrowList
             this->count++;
         };
         ArrowList(sf::RenderWindow*);
+        void DrawEnd();
         void DrawAll(){
-            arrows[0].Rotate(0.005);
-            this->arrows[0].Draw();
+            float angle = 0.005;
+            arrows[count-1].SetDotColor();
+            arrows[0].Rotate(angle);
+            //arrows[0].Draw();
             for(int i=1; i<this->count;i++) {
-                //arrows[i].MoveStart(arrows[i-1].GetEndX(), arrows[i-1].GetEndY());
-                arrows[i].MoveStartAndRotate(arrows[i-1].GetEndX(), arrows[i-1].GetEndY(), 0.01*float(i));
-                //arrows[i].MoveEnd();
-                arrows[i].Draw();
+                angle *=3;
+                arrows[i].MoveStartAndRotate(arrows[i-1].GetEndX(), arrows[i-1].GetEndY(), angle);
+ //               arrows[i].Draw();
             }
+            endx = arrows[count-1].GetEndX();
+            endy = MIDDLE*2-arrows[count-1].GetEndY();
         };
 };
 
 ArrowList::ArrowList(sf::RenderWindow* win) {
     this->window = win;
     this->count = 0;
-    this->x = 200;
-    this->y = 200;
+    this->x = MIDDLE;
+    this->y = MIDDLE;
+}
+void ArrowList::DrawEnd(){
+    sf::CircleShape endDot(1.f);
+    endDot.setFillColor(sf::Color::White);
+    endDot.setPosition(endx, endy);
+    window->draw(endDot);
 }
 
 Arrow::Arrow(double a, double b, double c, double d, sf::RenderWindow* win) {
@@ -74,6 +90,7 @@ Arrow::Arrow(double a, double b, double c, double d, sf::RenderWindow* win) {
     x1 = c;
     y1 = d;
     window = win;
+    endDot.setRadius(5.0);
     return;
 }
 void Arrow::MoveStart(double x, double y){
@@ -105,26 +122,31 @@ float Arrow::Len() {
 }
 
 void Arrow::Draw(){
-    line[0].position = sf::Vector2f(this->x0,this->y0);
-    line[1].position = sf::Vector2f(this->x1,this->y1);
+    line[0].position = sf::Vector2f(x0,2*MIDDLE-y0);
+    line[1].position = sf::Vector2f(x1,2*MIDDLE-y1);
     window->draw(line, 2, sf::Lines, sf::RenderStates::Default);
-    sf::CircleShape endDot(2.f);
-    endDot.setFillColor(sf::Color::White);
     endDot.setPosition(x1-2.0, y1-2.0);
     window->draw(endDot);
+}
+void Arrow::SetDotColor(){
+    endDot.setFillColor(sf::Color::Red);
 }
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(600, 600), "SFML works!");
+    sf::RenderWindow window(sf::VideoMode(MIDDLE*2, MIDDLE*2), "SFML works!");
     sf::CircleShape centreDot(4.f);
     centreDot.setFillColor(sf::Color::Red);
-    centreDot.setPosition(198., 198.);
+    centreDot.setPosition(MIDDLE-4., MIDDLE-4.);
     ArrowList arlist(&window);
-    arlist.Add(100., 0.);
-    arlist.Add(80., 0.);
-    arlist.Add(40., 0.);
-    arlist.Add(20., 0.);
+    arlist.Add(128., 0.);
+    arlist.Add(64., 0.);
+    arlist.Add(22., 0.);
+    arlist.Add(16., 0.);
+    arlist.Add(8., 0.);
+    arlist.Add(4., 0.);
+    arlist.Add(2., 0.);
+        window.clear(sf::Color::Black);
     while (window.isOpen())
     {
         sf::Event event;
@@ -132,11 +154,12 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
 
-        window.clear(sf::Color::Black);
+   //     window.clear(sf::Color::Black);
         arlist.DrawAll();
+        arlist.DrawEnd();
         window.draw(centreDot);
         window.display();
-        usleep(50000);
+        usleep(5000);
     }
 
     return 0;
